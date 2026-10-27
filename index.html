@@ -1,0 +1,2123 @@
+<!DOCTYPE html>
+<html lang="vi" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartLesson MD Pro - Hệ Thống Lưu Trữ & Truy Xuất Bài Học</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Marked.js for Markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Highlight.js for Code Syntax Highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Tùy chỉnh thanh cuộn (Scrollbar) */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.4);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.5);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(99, 102, 241, 0.8);
+        }
+
+        /* Định dạng hiển thị Markdown chuyên nghiệp */
+        .markdown-body {
+            line-height: 1.7;
+            font-size: 0.95rem;
+        }
+        .markdown-body h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+            color: #818cf8;
+        }
+        .markdown-body h2 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: #a5b4fc;
+        }
+        .markdown-body h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            margin-top: 1.25rem;
+            margin-bottom: 0.5rem;
+            color: #cbd5e1;
+        }
+        .markdown-body p {
+            margin-bottom: 1rem;
+        }
+        .markdown-body ul, .markdown-body ol {
+            margin-bottom: 1rem;
+            padding-left: 1.5rem;
+        }
+        .markdown-body ul {
+            list-style-type: disc;
+        }
+        .markdown-body ol {
+            list-style-type: decimal;
+        }
+        .markdown-body li {
+            margin-bottom: 0.25rem;
+        }
+        .markdown-body blockquote {
+            border-left: 4px solid #6366f1;
+            background: rgba(99, 102, 241, 0.1);
+            padding: 0.75rem 1rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+            margin-bottom: 1rem;
+            font-style: italic;
+        }
+        .markdown-body pre {
+            background: #0f172a !important;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            margin-bottom: 1rem;
+            border: 1px solid rgba(148, 163, 184, 0.15);
+            position: relative;
+        }
+        .markdown-body code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+        }
+        .markdown-body :not(pre) > code {
+            background: rgba(99, 102, 241, 0.15);
+            color: #a5b4fc;
+            padding: 0.15rem 0.4rem;
+            border-radius: 0.25rem;
+        }
+        .markdown-body table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1rem;
+        }
+        .markdown-body th, .markdown-body td {
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            padding: 0.6rem 0.8rem;
+            text-align: left;
+        }
+        .markdown-body th {
+            background: rgba(30, 41, 59, 0.8);
+            font-weight: 600;
+        }
+
+        /* Hiệu ứng mượt */
+        .card-hover {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(99, 102, 241, 0.2);
+        }
+
+        /* Quick Pill giống hệt mẫu ảnh */
+        .quick-pill {
+            background: #1a1b26;
+            color: #f1f5f9;
+            border: 1px solid #2e303e;
+            border-radius: 9999px;
+            padding: 0.35rem 0.9rem;
+            font-size: 0.78rem;
+            font-weight: 600;
+            transition: all 0.18s ease;
+            white-space: nowrap;
+        }
+        .quick-pill:hover {
+            border-color: #6366f1;
+            background: #242636;
+        }
+        .quick-pill.active {
+            background: #c4b5fd;
+            color: #1e1b4b;
+            border-color: #c4b5fd;
+            box-shadow: 0 0 15px rgba(196, 181, 253, 0.35);
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col selection:bg-brand-500 selection:text-white">
+
+    <!-- HEADER / NAVBAR -->
+    <header class="sticky top-0 z-30 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 lg:px-8 py-3">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+            <!-- Logo & Brand -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-purple-600 flex items-center justify-center shadow-lg shadow-brand-500/30">
+                    <i class="fa-brands fa-markdown text-xl text-white"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="font-bold text-lg tracking-tight text-white">SmartLesson <span class="text-brand-500">MD</span></h1>
+                        <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-brand-500/20 text-brand-400 border border-brand-500/30">Pro v2.5</span>
+                    </div>
+                    <p class="text-xs text-slate-400 hidden sm:block">Hệ thống lưu trữ Markdown & Đồng bộ Google Sheets siêu tốc</p>
+                </div>
+            </div>
+
+            <!-- Trạng thái Google Sheet & Các nút điều khiển chính -->
+            <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
+                <!-- Trạng thái kết nối -->
+                <div id="syncStatusBadge" onclick="openSheetModal()" class="cursor-pointer flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/90 border border-slate-700 hover:border-slate-600 text-xs transition">
+                    <span id="syncDot" class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                    <span id="syncText" class="text-slate-300 font-medium">Chế độ Local (Chưa gắn Sheet)</span>
+                </div>
+
+                <!-- Bộ đếm Tự động đồng bộ 10s (Auto-Sync 10s) -->
+                <button id="autoSyncToggleBtn" onclick="toggleAutoSync()" title="Bật/Tắt tự động tải dữ liệu mới từ Google Sheet sau mỗi 10 giây" class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-950/80 hover:bg-indigo-900/80 text-indigo-300 border border-indigo-500/40 text-xs font-medium transition active:scale-95">
+                    <i id="autoSyncIcon" class="fa-solid fa-rotate text-indigo-400"></i>
+                    <span>Tự động tải: <strong id="autoSyncTimerText" class="font-mono text-white">10s</strong></span>
+                </button>
+
+                <!-- Nút tải lại từ Google Sheet -->
+                <button onclick="fetchFromGoogleSheet(false)" title="Lấy dữ liệu mới nhất từ Google Sheet ngay lập tức (Alt+R)" class="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs sm:text-sm font-medium transition active:scale-95">
+                    <i id="syncIcon" class="fa-solid fa-cloud-arrow-down text-emerald-400"></i>
+                    <span class="hidden md:inline">Tải ngay</span>
+                </button>
+
+                <!-- Nút Cấu hình Google Sheet -->
+                <button onclick="openSheetModal()" class="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 text-xs sm:text-sm font-medium transition active:scale-95">
+                    <i class="fa-solid fa-table"></i>
+                    <span class="hidden sm:inline">Kết nối Google Sheet</span>
+                </button>
+
+                <!-- Nút Tạo Bài Học Mới -->
+                <button onclick="openEditorModal()" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-600 hover:bg-brand-500 text-white shadow-lg shadow-brand-600/30 text-xs sm:text-sm font-semibold transition active:scale-95">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Soạn Bài Mới</span>
+                    <kbd class="hidden lg:inline-block ml-1 px-1.5 py-0.5 text-[10px] bg-brand-700 rounded text-brand-200 font-mono">Alt+N</kbd>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- THANH CÔNG CỤ TÌM KIẾM & BỘ LỌC (FILTER BAR) -->
+    <section class="bg-slate-900/50 border-b border-slate-800/80 px-4 lg:px-8 py-4">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+                <!-- Ô tìm kiếm tổng hợp (Tên bài, nội dung, từ khóa) -->
+                <div class="md:col-span-5 relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                    <input type="text" id="searchInput" oninput="handleFilter()" placeholder="Tìm theo tên bài, nội dung hoặc từ khóa... (Ấn '/' để tìm nhanh)" 
+                        class="w-full pl-10 pr-20 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-sm text-white placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition">
+                    <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-white bg-slate-800 px-2 py-0.5 rounded">
+                        Xóa
+                    </button>
+                </div>
+
+                <!-- Lọc theo Lớp (Grade/Class) -->
+                <div class="md:col-span-3 relative">
+                    <i class="fa-solid fa-graduation-cap absolute left-3.5 top-1/2 -translate-y-1/2 text-brand-400 text-sm"></i>
+                    <select id="gradeFilter" onchange="handleFilter()" class="w-full pl-10 pr-8 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-sm text-slate-200 focus:outline-none focus:border-brand-500 transition appearance-none cursor-pointer">
+                        <option value="ALL">Tất cả các Lớp</option>
+                    </select>
+                    <i class="fa-solid fa-chevron-down absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs pointer-events-none"></i>
+                </div>
+
+                <!-- Lọc theo Bài / Chương (Lesson Code) -->
+                <div class="md:col-span-2 relative">
+                    <i class="fa-solid fa-book-bookmark absolute left-3.5 top-1/2 -translate-y-1/2 text-purple-400 text-sm"></i>
+                    <select id="lessonFilter" onchange="handleFilter()" class="w-full pl-10 pr-8 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-sm text-slate-200 focus:outline-none focus:border-brand-500 transition appearance-none cursor-pointer">
+                        <option value="ALL">Tất cả các Bài</option>
+                    </select>
+                    <i class="fa-solid fa-chevron-down absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs pointer-events-none"></i>
+                </div>
+
+                <!-- Chế độ hiển thị & Xuất/Nhập File (.JSON và .MD) -->
+                <div class="md:col-span-2 flex items-center justify-end gap-1.5">
+                    <button onclick="resetAllFilters()" title="Đặt lại bộ lọc" class="px-2.5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700/80 text-xs transition">
+                        <i class="fa-solid fa-filter-circle-xmark"></i>
+                    </button>
+                    <button onclick="exportCurrentMD()" title="Tải bài đang chọn về máy dạng .MD" class="px-2.5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-brand-400 border border-slate-700/80 text-xs font-semibold transition flex items-center gap-1">
+                        <i class="fa-brands fa-markdown"></i>
+                        <span class="hidden xl:inline">.MD</span>
+                    </button>
+                    <button onclick="exportJSON()" title="Sao lưu toàn bộ ra file .JSON" class="px-2.5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-emerald-400 border border-slate-700/80 text-xs font-semibold transition flex items-center gap-1">
+                        <i class="fa-solid fa-download"></i>
+                        <span class="hidden xl:inline">.JSON</span>
+                    </button>
+                    <label title="Tải lên file .JSON hoặc nhiều file .MD" class="cursor-pointer px-3 py-2.5 rounded-xl bg-brand-600/20 hover:bg-brand-600/30 text-brand-300 border border-brand-500/40 text-xs font-semibold transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-file-arrow-up"></i>
+                        <span>Tải lên (.json/.md)</span>
+                        <input type="file" id="importFile" accept=".json,.md,.markdown,.txt" multiple onchange="importFiles(event)" class="hidden">
+                    </label>
+                </div>
+            </div>
+
+            <!-- Thanh Chọn Nhanh (Quick Filter Pills giống hệt hình mẫu) -->
+            <div class="mt-3 pt-2.5 border-t border-slate-800/60 flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar" id="quickTypeFilterBar">
+                <!-- Sẽ được render tự động từ mảng QUICK_TAGS -->
+            </div>
+
+            <!-- Thanh Từ khóa (Keywords Tag Cloud) động -->
+            <div class="mt-2 flex items-center gap-2 overflow-x-auto pb-1 pt-1 no-scrollbar" id="keywordCloud">
+                <!-- Các tag từ khóa sẽ được render tự động tại đây -->
+            </div>
+        </div>
+    </section>
+
+    <!-- KHU VỰC NỘI DUNG CHÍNH (DANH SÁCH + KHUNG XEM TRƯỚC) -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- CỘT TRÁI: DANH SÁCH BÀI HỌC (5 CỘT) -->
+        <div class="lg:col-span-5 flex flex-col h-[calc(100vh-250px)] min-h-[500px]">
+            <!-- Thống kê kết quả -->
+            <div class="flex items-center justify-between mb-3 px-1">
+                <div class="text-xs text-slate-400">
+                    Hiển thị <span id="resultCount" class="font-bold text-white">0</span> bài học
+                    <span id="activeFilterText" class="text-brand-400 ml-1"></span>
+                </div>
+                <div class="text-[11px] text-slate-500">
+                    <i class="fa-regular fa-lightbulb text-amber-400 mr-1"></i>Ấn nút <span class="text-slate-300 font-medium">Copy MD</span> để chép cực nhanh
+                </div>
+            </div>
+
+            <!-- Danh sách cuộn -->
+            <div id="lessonListContainer" class="flex-1 overflow-y-auto space-y-3 pr-1">
+                <!-- Các thẻ bài học sẽ được inject bởi JS -->
+            </div>
+        </div>
+
+        <!-- CỘT PHẢI: KHUNG XEM CHI TIẾT & COPY NHANH (7 CỘT) -->
+        <div class="lg:col-span-7 flex flex-col h-[calc(100vh-250px)] min-h-[500px] bg-slate-900/90 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+            
+            <!-- Header của khung xem chi tiết -->
+            <div id="previewHeader" class="p-4 sm:p-5 bg-slate-900 border-b border-slate-800 flex flex-wrap items-start justify-between gap-4">
+                <div class="flex-1 min-w-[240px]">
+                    <div class="flex items-center gap-2 flex-wrap mb-1.5" id="previewBadges">
+                        <span class="px-2.5 py-0.5 rounded-md text-xs font-semibold bg-brand-500/20 text-brand-300 border border-brand-500/30">Lớp --</span>
+                        <span class="px-2.5 py-0.5 rounded-md text-xs font-semibold bg-purple-500/20 text-purple-300 border border-purple-500/30">Bài --</span>
+                    </div>
+                    <h2 id="previewTitle" class="text-lg sm:text-xl font-bold text-white leading-snug">Chọn một bài học để xem nội dung</h2>
+                </div>
+
+                <!-- Cụm nút Copy Siêu Tốc & Thao tác -->
+                <div id="previewActions" class="flex items-center gap-2 flex-wrap">
+                    <!-- Copy Markdown Gốc -->
+                    <button onclick="copyCurrentLesson('markdown')" class="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-semibold text-xs sm:text-sm shadow-lg shadow-brand-600/25 transition active:scale-95">
+                        <i class="fa-regular fa-copy"></i>
+                        <span>Copy Markdown</span>
+                    </button>
+
+                    <!-- Copy Văn bản thuần (Plain Text) -->
+                    <button onclick="copyCurrentLesson('text')" title="Copy dạng văn bản thuần (đã lọc bỏ ký hiệu Markdown)" class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs sm:text-sm font-medium transition active:scale-95">
+                        <i class="fa-solid fa-align-left text-slate-400"></i>
+                        <span>Copy Text</span>
+                    </button>
+
+                    <!-- Nút Chỉnh sửa -->
+                    <button onclick="editCurrentLesson()" title="Sửa bài học này" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 transition">
+                        <i class="fa-regular fa-pen-to-square"></i>
+                    </button>
+
+                    <!-- Nút Xóa -->
+                    <button onclick="deleteCurrentLesson()" title="Xóa bài học này" class="p-2 rounded-xl bg-slate-800 hover:bg-rose-950/60 text-rose-400 border border-slate-700 hover:border-rose-800 transition">
+                        <i class="fa-regular fa-trash-can"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Thanh chuyển chế độ xem: Rendered vs Raw Markdown -->
+            <div class="px-5 py-2 bg-slate-950/60 border-b border-slate-800/80 flex items-center justify-between text-xs">
+                <div class="flex items-center gap-4">
+                    <button onclick="switchPreviewMode('rendered')" id="tabRendered" class="py-1 font-medium text-brand-400 border-b-2 border-brand-500 transition">
+                        <i class="fa-regular fa-eye mr-1"></i>Bản trình bày đẹp
+                    </button>
+                    <button onclick="switchPreviewMode('raw')" id="tabRaw" class="py-1 font-medium text-slate-400 hover:text-slate-200 border-b-2 border-transparent transition">
+                        <i class="fa-solid fa-code mr-1"></i>Mã nguồn Markdown
+                    </button>
+                </div>
+                <div id="previewMeta" class="text-slate-500 hidden sm:block">
+                    Cập nhật: --
+                </div>
+            </div>
+
+            <!-- Nội dung bài học -->
+            <div class="flex-1 overflow-y-auto p-5 sm:p-6">
+                <!-- Chế độ xem đã Render -->
+                <div id="previewRenderedContent" class="markdown-body text-slate-200"></div>
+
+                <!-- Chế độ xem Raw Markdown -->
+                <pre id="previewRawContent" class="hidden font-mono text-xs sm:text-sm bg-slate-950 p-4 rounded-xl border border-slate-800 text-slate-300 whitespace-pre-wrap leading-relaxed select-all"></pre>
+            </div>
+
+            <!-- Footer Từ khóa của bài đang mở -->
+            <div id="previewFooter" class="px-5 py-3 bg-slate-950/80 border-t border-slate-800 flex items-center justify-between gap-2 flex-wrap">
+                <div class="flex items-center gap-1.5 flex-wrap" id="previewKeywords">
+                    <!-- Tags -->
+                </div>
+                <span class="text-[11px] text-slate-500 font-mono" id="charCountInfo">0 ký tự</span>
+            </div>
+        </div>
+    </main>
+
+    <!-- ========================================== -->
+    <!-- MODAL 1: TRÌNH SOẠN THẢO BÀI HỌC MARKDOWN -->
+    <!-- ========================================== -->
+    <div id="editorModal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-6xl h-[92vh] flex flex-col shadow-2xl overflow-hidden animate-fade-in">
+            
+            <!-- Modal Header -->
+            <div class="px-5 py-3.5 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <i class="fa-solid fa-pen-nib text-brand-400"></i>
+                    <h3 id="editorModalTitle" class="font-bold text-base sm:text-lg text-white">Lưu Bài Học (Lớp - Tên bài - Chú thích)</h3>
+                </div>
+                <div class="flex items-center gap-2">
+                    <!-- Nút nạp nhanh từ file .md trong lúc soạn -->
+                    <label class="cursor-pointer px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-brand-300 border border-slate-700 text-xs font-medium flex items-center gap-1.5 transition">
+                        <i class="fa-solid fa-file-import"></i>
+                        <span>Nạp từ file .md / .json</span>
+                        <input type="file" accept=".md,.markdown,.txt,.json" onchange="loadFileIntoEditor(event)" class="hidden">
+                    </label>
+                    <button onclick="closeEditorModal()" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Form Metadata chuẩn: LỚP - TÊN BÀI - CHÚ THÍCH + CHỌN NHANH -->
+            <div class="p-4 bg-slate-900/95 border-b border-slate-800 space-y-3">
+                <input type="hidden" id="editLessonId">
+                
+                <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                    <!-- 1. LỚP -->
+                    <div class="sm:col-span-2">
+                        <label class="block text-[11px] font-semibold uppercase tracking-wider text-brand-400 mb-1">1. Lớp *</label>
+                        <input type="text" id="inputGrade" list="gradeSuggestions" placeholder="VD: Lớp 10, Lớp 12..." 
+                            class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-sm text-white focus:border-brand-500 focus:outline-none">
+                        <datalist id="gradeSuggestions">
+                            <option value="Lớp 6">
+                            <option value="Lớp 7">
+                            <option value="Lớp 8">
+                            <option value="Lớp 9">
+                            <option value="Lớp 10">
+                            <option value="Lớp 11">
+                            <option value="Lớp 12">
+                            <option value="Đại học">
+                        </datalist>
+                    </div>
+
+                    <!-- 2. TÊN BÀI (Gộp Mã bài / Tên bài học rõ ràng) -->
+                    <div class="sm:col-span-5">
+                        <label class="block text-[11px] font-semibold uppercase tracking-wider text-purple-400 mb-1">2. Tên bài (VD: Bài 1: Hàm số...) *</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="inputLessonCode" placeholder="Bài 1, Chủ đề 2..." 
+                                class="w-1/3 px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-sm text-white focus:border-brand-500 focus:outline-none">
+                            <input type="text" id="inputTitle" placeholder="Nhập tên bài học..." 
+                                class="w-2/3 px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-sm text-white focus:border-brand-500 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <!-- 3. CHÚ THÍCH & TỪ KHÓA -->
+                    <div class="sm:col-span-5">
+                        <label class="block text-[11px] font-semibold uppercase tracking-wider text-amber-400 mb-1">3. Chú thích bài học / Từ khóa</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="inputNote" placeholder="Chú thích (VD: Khám phá kiến thức - Tiết 1)..." 
+                                class="w-3/5 px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-sm text-white focus:border-brand-500 focus:outline-none">
+                            <input type="text" id="inputKeywords" placeholder="Từ khóa phụ..." 
+                                class="w-2/5 px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-sm text-white focus:border-brand-500 focus:outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- THANH CHỌN NHANH (QUICK PILLS GIỐNG HỆT ẢNH MẪU) -->
+                <div class="flex items-center gap-2 flex-wrap bg-[#11121a] px-3.5 py-2.5 rounded-xl border border-slate-800/90">
+                    <span class="text-xs font-medium text-slate-400 mr-1">Chọn nhanh:</span>
+                    <div id="editorQuickPills" class="flex items-center gap-2 flex-wrap">
+                        <!-- Các nút Chọn nhanh được render tại đây -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Thanh công cụ định dạng Markdown nhanh -->
+            <div class="px-4 py-2 bg-slate-950/60 border-b border-slate-800 flex items-center gap-1.5 flex-wrap">
+                <button type="button" onclick="insertMD('**', '**')" title="In đậm" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold">B</button>
+                <button type="button" onclick="insertMD('*', '*')" title="In nghiêng" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs italic">I</button>
+                <button type="button" onclick="insertMD('# ', '')" title="Tiêu đề H1" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold">H1</button>
+                <button type="button" onclick="insertMD('## ', '')" title="Tiêu đề H2" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold">H2</button>
+                <button type="button" onclick="insertMD('### ', '')" title="Tiêu đề H3" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold">H3</button>
+                <span class="h-4 w-px bg-slate-700 mx-1"></span>
+                <button type="button" onclick="insertMD('- ', '')" title="Danh sách" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs"><i class="fa-solid fa-list-ul"></i></button>
+                <button type="button" onclick="insertMD('> ', '')" title="Ghi chú / Trích dẫn" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs"><i class="fa-solid fa-quote-left"></i></button>
+                <button type="button" onclick="insertMD('`', '`')" title="Mã inline" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-mono">Code</button>
+                <button type="button" onclick="insertMD('```javascript\n', '\n```')" title="Khối Code" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs"><i class="fa-solid fa-file-code mr-1"></i>Khối Code</button>
+                <button type="button" onclick="insertMD('| Cột 1 | Cột 2 |\n|---|---|\n| Giá trị 1 | Giá trị 2 |', '')" title="Chèn Bảng" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs"><i class="fa-solid fa-table mr-1"></i>Bảng</button>
+                <button type="button" onclick="insertLessonTemplate()" class="ml-auto px-2.5 py-1 rounded bg-brand-600/20 hover:bg-brand-600/40 text-brand-300 border border-brand-500/30 text-xs font-medium">
+                    <i class="fa-solid fa-wand-magic-sparkles mr-1"></i>Chèn Mẫu Bài Học Chuẩn
+                </button>
+            </div>
+
+            <!-- Khu vực Soạn thảo Chia đôi (Split View: Trái gõ Markdown - Phải xem trực tiếp) -->
+            <div class="flex-1 grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-800 overflow-hidden">
+                <!-- Ô nhập Markdown -->
+                <div class="flex flex-col h-full overflow-hidden">
+                    <div class="px-4 py-1.5 bg-slate-950/40 text-[11px] font-mono text-slate-400 uppercase">Soạn thảo Markdown</div>
+                    <textarea id="inputMarkdown" oninput="updateLivePreview()" placeholder="Nhập nội dung bài học bằng cú pháp Markdown tại đây..." 
+                        class="flex-1 w-full p-4 bg-slate-950 text-slate-100 font-mono text-sm leading-relaxed focus:outline-none resize-none"></textarea>
+                </div>
+
+                <!-- Ô Xem trước trực tiếp (Live Preview) -->
+                <div class="flex flex-col h-full overflow-hidden bg-slate-900/50">
+                    <div class="px-4 py-1.5 bg-slate-950/40 text-[11px] font-mono text-slate-400 uppercase">Xem trước trực tiếp (Live Preview)</div>
+                    <div id="livePreviewBox" class="flex-1 p-4 overflow-y-auto markdown-body text-slate-200"></div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-5 py-3 bg-slate-950 border-t border-slate-800 flex items-center justify-between gap-4">
+                <div class="text-xs text-slate-400 flex items-center gap-2">
+                    <i class="fa-solid fa-circle-info text-brand-400"></i>
+                    <span>Khi bấm Lưu, bài học sẽ lưu tức thì vào máy và tự động đẩy lên Google Sheet (nếu đã kết nối).</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="closeEditorModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium transition">
+                        Hủy
+                    </button>
+                    <button onclick="saveLesson()" id="saveLessonBtn" class="flex items-center gap-2 px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-sm font-semibold shadow-lg shadow-brand-600/30 transition">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        <span>Lưu & Đồng Bộ Google Sheet</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================== -->
+    <!-- MODAL 2: CẤU HÌNH GOOGLE SHEETS & MÃ APPS SCRIPT DỰNG SẴN -->
+    <!-- ========================================================== -->
+    <div id="sheetModal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+            
+            <!-- Header -->
+            <div class="px-6 py-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                        <i class="fa-solid fa-table text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-white text-base sm:text-lg">Cấu Hình Đồng Bộ Google Sheets 2 Chiều</h3>
+                        <p class="text-xs text-slate-400">Lưu bài học lên Google Sheet và tải ngược về bất cứ thiết bị nào</p>
+                    </div>
+                </div>
+                <button onclick="closeSheetModal()" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Body -->
+            <div class="p-6 overflow-y-auto space-y-5 text-sm">
+                <!-- Ô nhập Web App URL -->
+                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800">
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-emerald-400 mb-2">
+                        1. Đường dẫn Google Apps Script Web App URL của bạn:
+                    </label>
+                    <div class="flex flex-col sm:flex-row gap-2">
+                        <input type="url" id="sheetUrlInput" placeholder="https://script.google.com/macros/s/AKfycb.../exec" 
+                            class="flex-1 px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white focus:border-emerald-500 focus:outline-none font-mono">
+                        <button onclick="saveSheetUrl()" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm transition whitespace-nowrap">
+                            <i class="fa-solid fa-link mr-1.5"></i>Lưu Kết Nối
+                        </button>
+                    </div>
+                    <div class="mt-3 flex flex-wrap items-center gap-2">
+                        <button onclick="pushAllToGoogleSheet()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium transition">
+                            <i class="fa-solid fa-cloud-arrow-up text-brand-400 mr-1"></i>Đẩy toàn bộ bài hiện có lên Sheet
+                        </button>
+                        <button onclick="fetchFromGoogleSheet(false)" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium transition">
+                            <i class="fa-solid fa-cloud-arrow-down text-emerald-400 mr-1"></i>Tải toàn bộ bài từ Sheet về máy
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Hướng dẫn 3 bước cài đặt Google Sheet -->
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h4 class="font-semibold text-white text-sm">
+                            2. Hướng dẫn tạo Google Sheet Backend trong 1 phút (Hoàn toàn miễn phí):
+                        </h4>
+                        <button onclick="copyAppsScriptCode()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold transition">
+                            <i class="fa-regular fa-copy"></i>
+                            <span>Copy Mã Apps Script</span>
+                        </button>
+                    </div>
+
+                    <ol class="list-decimal list-inside space-y-1.5 text-xs text-slate-300 bg-slate-950/60 p-4 rounded-xl border border-slate-800/80 leading-relaxed">
+                        <li>Mở một file <strong>Google Sheets</strong> mới tại <span class="text-brand-400 font-mono">sheets.new</span>.</li>
+                        <li>Trên thanh menu, chọn <strong>Tiện ích mở rộng (Extensions)</strong> &rarr; <strong>Apps Script</strong>.</li>
+                        <li>Xóa đoạn mã mặc định đi, bấm nút <strong>Copy Mã Apps Script</strong> ở trên và dán vào, sau đó nhấn biểu tượng <strong>Lưu (Save)</strong>.</li>
+                        <li>Bấm nút <strong>Triển khai (Deploy)</strong> ở góc phải trên &rarr; <strong>Tùy chọn triển khai mới (New deployment)</strong>.</li>
+                        <li>Chọn loại: <strong>Ứng dụng web (Web app)</strong>. Phần <em>"Ai có quyền truy cập" (Who has access)</em> chọn: <strong>Bất kỳ ai (Anyone)</strong> &rarr; Bấm <strong>Triển khai</strong>.</li>
+                        <li>Copy đường dẫn <strong>Web App URL</strong> vừa nhận được và dán vào ô số 1 phía trên là hoàn tất!</li>
+                    </ol>
+
+                    <!-- Khung chứa code Google Apps Script -->
+                    <pre id="appsScriptCodeBlock" class="p-4 bg-slate-950 border border-slate-800 rounded-xl font-mono text-xs text-emerald-300 overflow-x-auto leading-relaxed select-all">
+// =========================================================
+// MÃ GOOGLE APPS SCRIPT DÀNH CHO SMARTLESSON MD PRO
+// Cấu trúc chuẩn: Lớp - Tên bài - Chú thích - Chọn nhanh
+// =========================================================
+
+const SHEET_NAME = "Lessons";
+
+function setupSheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName(SHEET_NAME);
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEET_NAME);
+    sheet.appendRow(["id", "grade", "lessonCode", "title", "note", "quickType", "keywords", "content", "updatedAt"]);
+    sheet.getRange("A1:I1").setFontWeight("bold").setBackground("#e0e7ff");
+  }
+  return sheet;
+}
+
+// 1. LẤY DỮ LIỆU TỪ GOOGLE SHEET VỀ ỨNG DỤNG (GET)
+function doGet(e) {
+  const sheet = setupSheet();
+  const rows = sheet.getDataRange().getValues();
+  const headers = rows.shift();
+  
+  const lessons = rows.map(row => {
+    // Tương thích ngược với bảng 7 cột cũ và bảng 9 cột mới
+    if (row.length >= 9) {
+      return {
+        id: String(row[0]),
+        grade: String(row[1]),
+        lessonCode: String(row[2]),
+        title: String(row[3]),
+        note: String(row[4]),
+        quickType: String(row[5]),
+        keywords: String(row[6]),
+        content: String(row[7]),
+        updatedAt: String(row[8])
+      };
+    } else {
+      return {
+        id: String(row[0]),
+        grade: String(row[1]),
+        lessonCode: String(row[2]),
+        title: String(row[3]),
+        note: "",
+        quickType: "",
+        keywords: String(row[4]),
+        content: String(row[5]),
+        updatedAt: String(row[6])
+      };
+    }
+  }).filter(item => item.id && item.title);
+
+  return ContentService.createTextOutput(JSON.stringify({
+    status: "success",
+    data: lessons
+  })).setMimeType(ContentService.MimeType.JSON);
+}
+
+// 2. LƯU / CẬP NHẬT / XÓA BÀI HỌC LÊN GOOGLE SHEET (POST)
+function doPost(e) {
+  try {
+    const sheet = setupSheet();
+    const payload = JSON.parse(e.postData.contents);
+    const action = payload.action;
+
+    if (action === "UPSERT") {
+      const item = payload.lesson;
+      const data = sheet.getDataRange().getValues();
+      let foundRow = -1;
+      for (let i = 1; i < data.length; i++) {
+        if (String(data[i][0]) === String(item.id)) {
+          foundRow = i + 1;
+          break;
+        }
+      }
+      const rowValues = [
+        item.id, item.grade, item.lessonCode, item.title, 
+        item.note || "", item.quickType || "", item.keywords || "", 
+        item.content, item.updatedAt
+      ];
+      if (foundRow > 0) {
+        sheet.getRange(foundRow, 1, 1, 9).setValues([rowValues]);
+      } else {
+        sheet.appendRow(rowValues);
+      }
+    } 
+    else if (action === "DELETE") {
+      const targetId = String(payload.id);
+      const data = sheet.getDataRange().getValues();
+      for (let i = 1; i < data.length; i++) {
+        if (String(data[i][0]) === targetId) {
+          sheet.deleteRow(i + 1);
+          break;
+        }
+      }
+    }
+    else if (action === "SYNC_ALL") {
+      sheet.clearContents();
+      sheet.appendRow(["id", "grade", "lessonCode", "title", "note", "quickType", "keywords", "content", "updatedAt"]);
+      const lessons = payload.lessons || [];
+      if (lessons.length > 0) {
+        const rows = lessons.map(item => [
+          item.id, item.grade, item.lessonCode, item.title, 
+          item.note || "", item.quickType || "", item.keywords || "", 
+          item.content, item.updatedAt
+        ]);
+        sheet.getRange(2, 1, rows.length, 9).setValues(rows);
+      }
+    }
+
+    return ContentService.createTextOutput(JSON.stringify({ status: "success" }))
+                         .setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ status: "error", message: err.toString() }))
+                         .setMimeType(ContentService.MimeType.JSON);
+  }
+}</pre>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="px-6 py-3 bg-slate-950 border-t border-slate-800 flex justify-end">
+                <button onclick="closeSheetModal()" class="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-medium">
+                    Đóng
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL XÁC NHẬN XÓA (Thay thế confirm() mặc định) -->
+    <div id="deleteConfirmModal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 shadow-2xl">
+            <div class="flex items-center gap-3 text-rose-400 mb-3">
+                <i class="fa-solid fa-triangle-exclamation text-2xl"></i>
+                <h4 class="font-bold text-lg text-white">Xác nhận xóa bài học?</h4>
+            </div>
+            <p id="deleteModalDesc" class="text-sm text-slate-300 mb-6">Bạn có chắc chắn muốn xóa bài học này không? Dữ liệu cũng sẽ được xóa khỏi Google Sheet nếu đang kết nối.</p>
+            <div class="flex justify-end gap-3">
+                <button onclick="closeDeleteModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium">Hủy</button>
+                <button onclick="confirmDeleteLesson()" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-sm font-semibold">Xóa Vĩnh Viễn</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST THÔNG BÁO NHANH -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- ========================================== -->
+    <!-- LOGIC JAVASCRIPT CHÍNH CỦA HỆ THỐNG        -->
+    <!-- ========================================== -->
+    <script>
+        // Cấu hình Marked.js với Highlight.js
+        marked.setOptions({
+            breaks: true,
+            gfm: true,
+            highlight: function(code, lang) {
+                if (lang && hljs.getLanguage(lang)) {
+                    return hljs.highlight(code, { language: lang }).value;
+                }
+                return hljs.highlightAuto(code).value;
+            }
+        });
+
+        // DANH SÁCH CÁC MỤC "CHỌN NHANH" GIỐNG HỆT HÌNH MẪU CỦA NGƯỜI DÙNG
+        const QUICK_TYPES = [
+            "Bài giảng mới",
+            "Khởi động 5 phút",
+            "Khám phá kiến thức",
+            "Tiết luyện tập",
+            "Phân hoá 3 mức",
+            "Sửa sai lầm",
+            "Toán thực tế",
+            "Trò chơi thi đua",
+            "Ôn kiểm tra"
+        ];
+
+        // 1. DỮ LIỆU MẪU BAN ĐẦU (Theo chuẩn Lớp - Tên bài - Chú thích - Chọn nhanh)
+        const DEFAULT_LESSONS = [
+            {
+                id: "lesson-101",
+                grade: "Lớp 12",
+                lessonCode: "Bài 1",
+                title: "Tính đơn điệu và Cực trị của hàm số",
+                note: "Tài liệu trọng tâm Giải tích 12 - Dùng dạy ca sáng",
+                quickType: "Khám phá kiến thức",
+                keywords: "đạo hàm, cực trị, bảng biến thiên, giải tích 12, đồng biến",
+                updatedAt: "2025-02-20 08:30",
+                content: `# Bài 1: Tính đơn điệu và Cực trị của hàm số
+
+> **Tóm tắt trọng tâm:** Nắm vững mối liên hệ giữa dấu của đạo hàm $f'(x)$ và chiều biến thiên của hàm số trên một khoảng.
+
+## 1. Định lý về tính đơn điệu
+Giả sử hàm số $y = f(x)$ có đạo hàm trên khoảng $(a; b)$:
+- Nếu $f'(x) > 0, \\forall x \\in (a; b)$ thì hàm số **đồng biến** trên khoảng $(a; b)$.
+- Nếu $f'(x) < 0, \\forall x \\in (a; b)$ thì hàm số **nghịch biến** trên khoảng $(a; b)$.
+
+## 2. Quy tắc tìm cực trị nhanh
+| Bước | Nội dung thực hiện | Lưu ý quan trọng |
+|---|---|---|
+| Bước 1 | Tìm tập xác định $D$ | Chú ý điều kiện mẫu và căn thức |
+| Bước 2 | Tính đạo hàm $f'(x)$ | Giải phương trình $f'(x) = 0$ |
+| Bước 3 | Lập bảng biến thiên | Xét dấu đạo hàm qua các nghiệm đơn |
+
+## 3. Công thức giải nhanh Hàm bậc ba
+Cho hàm số $y = ax^3 + bx^2 + cx + d$ $(a \\neq 0)$:
+\`\`\`python
+# Kiểm tra điều kiện có 2 cực trị
+delta_y_prime = b**2 - 3*a*c
+if delta_y_prime > 0:
+    print("Hàm số có 2 điểm cực trị phân biệt")
+else:
+    print("Hàm số không có cực trị")
+\`\`\`
+
+### Mẹo làm trắc nghiệm nhanh:
+- Đạo hàm đổi dấu từ **Dương (+) sang Âm (-)** $\\rightarrow$ **Cực Đại**.
+- Đạo hàm đổi dấu từ **Âm (-) sang Dương (+)** $\\rightarrow$ **Cực Tiểu**.`
+            },
+            {
+                id: "lesson-102",
+                grade: "Lớp 10",
+                lessonCode: "Bài 2",
+                title: "Cấu trúc rẽ nhánh if-else và vòng lặp trong Python",
+                note: "Bài tập phân hóa 3 mức độ cho học sinh thực hành phòng máy",
+                quickType: "Phân hoá 3 mức",
+                keywords: "python, tin học 10, if-else, vòng lặp for, lập trình",
+                updatedAt: "2025-02-20 09:15",
+                content: `# Bài 2: Cấu trúc rẽ nhánh và Vòng lặp trong Python
+
+> Bài học cung cấp cú pháp chuẩn để copy nhanh vào trình chấm bài hoặc tài liệu giảng dạy Tin học 10.
+
+## 1. Cấu trúc rẽ nhánh \`if - elif - else\`
+\`\`\`python
+diem_tb = float(input("Nhập điểm trung bình: "))
+
+if diem_tb >= 8.0:
+    xep_loai = "Giỏi"
+elif diem_tb >= 6.5:
+    xep_loai = "Khá"
+elif diem_tb >= 5.0:
+    xep_loai = "Đạt"
+else:
+    xep_loai = "Chưa đạt"
+
+print(f"Kết quả xếp loại: {xep_loai}")
+\`\`\`
+
+## 2. Vòng lặp \`for\` với hàm \`range()\`
+- \`range(n)\`: Lặp từ \`0\` đến \`n - 1\`.
+- \`range(start, stop, step)\`: Lặp từ \`start\` đến trước \`stop\` với bước nhảy \`step\`.
+
+\`\`\`python
+# Tính tổng các số chẵn từ 1 đến 100
+tong_chan = sum(i for i in range(2, 101, 2))
+print("Tổng các số chẵn là:", tong_chan)
+\`\`\``
+            },
+            {
+                id: "lesson-103",
+                grade: "Lớp 11",
+                lessonCode: "Bài 3",
+                title: "Ứng dụng cấp số cộng & cấp số nhân vào bài toán lãi suất",
+                note: "Bài toán thực tế gắn liền ngân hàng và tăng trưởng dân số",
+                quickType: "Toán thực tế",
+                keywords: "toán 11, cấp số nhân, lãi kép, toán thực tế",
+                updatedAt: "2025-02-20 10:00",
+                content: `# Bài 3: Toán thực tế - Lãi kép & Tăng trưởng
+
+## 1. Công thức lãi kép định kỳ
+Nếu gửi số tiền gốc $P$ với lãi suất $r$/kỳ sau $n$ kỳ:
+$$A = P(1 + r)^n$$
+
+## 2. Các sai lầm học sinh hay mắc
+- Quên đổi phần trăm lãi suất ra số thập phân (VD: $6\\%$ phải viết là $0.06$).
+- Nhầm lẫn kỳ hạn tính lãi (theo tháng khác với theo năm).`
+            },
+            {
+                id: "lesson-104",
+                grade: "Lớp 12",
+                lessonCode: "Bài 4",
+                title: "Định luật Ôm và Công suất điện trong mạch điện xoay chiều",
+                note: "Câu hỏi khởi động 5 phút đầu giờ kiểm tra bài cũ",
+                quickType: "Khởi động 5 phút",
+                keywords: "vật lý 12, điện xoay chiều, công suất, hệ số công suất, RLC",
+                updatedAt: "2025-02-20 11:20",
+                content: `# Bài 4: Mạch điện xoay chiều RLC nối tiếp
+
+## 1. Tổng trở của mạch RLC
+$$Z = \\sqrt{R^2 + (Z_L - Z_C)^2}$$
+Trong đó:
+- Cảm kháng: $Z_L = \\omega L = 2\\pi f L$
+- Dung kháng: $Z_C = \\frac{1}{\\omega C} = \\frac{1}{2\\pi f C}$
+
+## 2. Hiện tượng cộng hưởng điện
+Xảy ra khi $Z_L = Z_C \\Leftrightarrow \\omega = \\frac{1}{\\sqrt{LC}}$:
+- Tổng trở đạt **cực tiểu**: $Z_{min} = R$
+- Cường độ dòng điện hiệu dụng **cực đại**: $I_{max} = \\frac{U}{R}$
+- Hệ số công suất $\\cos\\varphi = 1$`
+            }
+        ];
+
+        // 2. BIẾN TRẠNG THÁI TOÀN CỤC (IN-MEMORY & GOOGLE SHEET BRIDGE)
+        // Lưu trên máy để tải lại trang không mất bài
+        const LS_KEY = 'smartlesson-md-pro:data', LS_URL = 'smartlesson-md-pro:url', LS_TOMB = 'smartlesson-md-pro:deleted';
+        const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } };
+        const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { showToast("Bộ nhớ trình duyệt đã đầy — hãy Xuất JSON để sao lưu.", "error"); } };
+        let deletedIds = lsGet(LS_TOMB, []);
+        let lessonsData = lsGet(LS_KEY, null) || [...DEFAULT_LESSONS];
+        function persistLocal() { lsSet(LS_KEY, lessonsData); lsSet(LS_TOMB, deletedIds.slice(-300)); }
+        const tsOf = s => { s = String(s || ''); return Date.parse(s.replace(' ', 'T')) || Date.parse(s) || 0; };
+        let filteredLessons = [...lessonsData];
+        let currentSelectedId = lessonsData[0]?.id || null;
+        let currentPreviewMode = 'rendered'; // 'rendered' hoặc 'raw'
+        let currentKeywordTag = '';
+        let currentQuickTypeFilter = ''; // Bộ lọc theo thanh Chọn nhanh ở trang chính
+        let selectedEditorQuickType = 'Khám phá kiến thức'; // Giá trị Chọn nhanh đang kích hoạt trong Modal lưu bài
+        let googleSheetWebAppUrl = lsGet(LS_URL, '');
+        let pendingDeleteId = null;
+
+        // Biến phục vụ đồng bộ tự động mỗi 10 giây (Auto-Sync 10s)
+        let autoSyncEnabled = true;
+        let autoSyncCountdown = 10;
+        let autoSyncIntervalId = null;
+        let isSyncingInProgress = false;
+        let lastWriteTime = 0;
+
+        // 3. KHỞI TẠO HỆ THỐNG KHI TẢI TRANG
+        window.onload = function() {
+            populateFilterDropdowns();
+            renderQuickTypeFilterBar();
+            renderEditorQuickPills();
+            renderKeywordCloud();
+            handleFilter();
+            if (currentSelectedId) {
+                selectLesson(currentSelectedId);
+            }
+            setupKeyboardShortcuts();
+            startAutoSyncLoop();
+        };
+
+        // Render thanh Chọn nhanh ở ngoài màn hình lọc chính
+        function renderQuickTypeFilterBar() {
+            const bar = document.getElementById('quickTypeFilterBar');
+            if (!bar) return;
+
+            let html = `<span class="text-xs font-medium text-slate-400 mr-1 whitespace-nowrap">Chọn nhanh:</span>`;
+            html += `<button type="button" onclick="filterByQuickType('')" class="quick-pill ${!currentQuickTypeFilter ? 'active' : ''}">Tất cả</button>`;
+
+            QUICK_TYPES.forEach(type => {
+                const isActive = currentQuickTypeFilter === type;
+                html += `<button type="button" onclick="filterByQuickType('${escapeHtml(type)}')" class="quick-pill ${isActive ? 'active' : ''}">${escapeHtml(type)}</button>`;
+            });
+
+            bar.innerHTML = html;
+        }
+
+        function filterByQuickType(type) {
+            currentQuickTypeFilter = (currentQuickTypeFilter === type) ? '' : type;
+            renderQuickTypeFilterBar();
+            handleFilter();
+        }
+
+        // Render thanh Chọn nhanh trong Modal Soạn/Lưu bài học (Giống hệt ảnh mẫu)
+        function renderEditorQuickPills() {
+            const container = document.getElementById('editorQuickPills');
+            if (!container) return;
+
+            container.innerHTML = QUICK_TYPES.map(type => {
+                const isActive = selectedEditorQuickType === type;
+                return `<button type="button" onclick="selectEditorQuickPill('${escapeHtml(type)}')" class="quick-pill ${isActive ? 'active' : ''}">${escapeHtml(type)}</button>`;
+            }).join('');
+        }
+
+        function selectEditorQuickPill(type) {
+            selectedEditorQuickType = type;
+            renderEditorQuickPills();
+
+            // Tự động điền gợi ý vào ô Chú thích nếu ô Chú thích đang trống hoặc đang mang tên một mục Chọn nhanh khác
+            const noteInput = document.getElementById('inputNote');
+            const currentNote = noteInput.value.trim();
+            if (!currentNote || QUICK_TYPES.includes(currentNote)) {
+                noteInput.value = type;
+            }
+        }
+
+        // Bộ đếm ngược 10 giây tự động tải dữ liệu từ Google Sheets
+        function startAutoSyncLoop() {
+            if (autoSyncIntervalId) clearInterval(autoSyncIntervalId);
+            autoSyncIntervalId = setInterval(() => {
+                const timerTextEl = document.getElementById('autoSyncTimerText');
+                const iconEl = document.getElementById('autoSyncIcon');
+
+                if (!autoSyncEnabled) {
+                    if (timerTextEl) timerTextEl.textContent = 'TẮT';
+                    if (iconEl) iconEl.classList.remove('fa-spin');
+                    return;
+                }
+
+                if (!googleSheetWebAppUrl) {
+                    if (timerTextEl) timerTextEl.textContent = 'Chờ kết nối';
+                    return;
+                }
+
+                // Tạm dừng đếm ngược nếu người dùng đang mở cửa sổ Soạn thảo hoặc Xác nhận xóa
+                const isEditorOpen = !document.getElementById('editorModal').classList.contains('hidden');
+                const isDeleteOpen = !document.getElementById('deleteConfirmModal').classList.contains('hidden');
+                if (isEditorOpen || isDeleteOpen || isSyncingInProgress) {
+                    if (timerTextEl) timerTextEl.textContent = 'Tạm dừng';
+                    return;
+                }
+
+                autoSyncCountdown--;
+                if (timerTextEl) timerTextEl.textContent = `${autoSyncCountdown}s`;
+
+                if (autoSyncCountdown <= 0) {
+                    autoSyncCountdown = 10;
+                    // Nếu vừa mới ghi/xóa lên Google Sheet trong vòng 4 giây trước đó thì bỏ qua 1 nhịp để Google Sheet kịp lưu xong
+                    if (Date.now() - lastWriteTime > 4000) {
+                        fetchFromGoogleSheet(true); // silent = true để đồng bộ mượt mà không hiện thông báo làm phiền
+                    }
+                }
+            }, 1000);
+        }
+
+        function toggleAutoSync() {
+            autoSyncEnabled = !autoSyncEnabled;
+            autoSyncCountdown = 10;
+            const btn = document.getElementById('autoSyncToggleBtn');
+            const timerTextEl = document.getElementById('autoSyncTimerText');
+            if (autoSyncEnabled) {
+                btn.className = "flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-950/80 hover:bg-indigo-900/80 text-indigo-300 border border-indigo-500/40 text-xs font-medium transition active:scale-95";
+                timerTextEl.textContent = googleSheetWebAppUrl ? "10s" : "Chờ kết nối";
+                showToast("Đã BẬT tự động tải từ Google Sheet sau mỗi 10 giây!", "success");
+            } else {
+                btn.className = "flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-400 border border-slate-700 text-xs font-medium transition active:scale-95";
+                timerTextEl.textContent = "TẮT";
+                showToast("Đã TẮT tự động tải sau 10 giây.", "info");
+            }
+        }
+
+        // 4. HỆ THỐNG TÌM KIẾM & LỌC ĐA CHIỀU TỨC THÌ
+        function handleFilter() {
+            persistLocal();
+            const query = document.getElementById('searchInput').value.trim().toLowerCase();
+            const selectedGrade = document.getElementById('gradeFilter').value;
+            const selectedLesson = document.getElementById('lessonFilter').value;
+
+            // Ẩn/Hiện nút xóa tìm kiếm
+            const clearBtn = document.getElementById('clearSearchBtn');
+            if (query.length > 0) {
+                clearBtn.classList.remove('hidden');
+            } else {
+                clearBtn.classList.add('hidden');
+            }
+
+            filteredLessons = lessonsData.filter(item => {
+                // Lọc theo Lớp
+                const matchGrade = (selectedGrade === 'ALL') || ((item.grade || '').toLowerCase() === selectedGrade.toLowerCase());
+                // Lọc theo Mã Bài
+                const matchLesson = (selectedLesson === 'ALL') || ((item.lessonCode || '').toLowerCase() === selectedLesson.toLowerCase());
+                // Lọc theo mục Chọn nhanh (Quick Pill)
+                const matchQuickType = (!currentQuickTypeFilter) || 
+                    ((item.quickType || '').toLowerCase() === currentQuickTypeFilter.toLowerCase()) ||
+                    ((item.note || '').toLowerCase().includes(currentQuickTypeFilter.toLowerCase()));
+                // Lọc theo Tag từ khóa đang chọn
+                const matchTag = (!currentKeywordTag) || (
+                    (item.keywords || '').toLowerCase().split(',').map(k => k.trim()).includes(currentKeywordTag.toLowerCase())
+                );
+                // Tìm kiếm toàn văn (Lớp, Tên bài, Chú thích, Chọn nhanh, Từ khóa, Nội dung)
+                const matchQuery = (!query) || 
+                    (item.title || '').toLowerCase().includes(query) ||
+                    (item.lessonCode || '').toLowerCase().includes(query) ||
+                    (item.grade || '').toLowerCase().includes(query) ||
+                    (item.note || '').toLowerCase().includes(query) ||
+                    (item.quickType || '').toLowerCase().includes(query) ||
+                    (item.keywords || '').toLowerCase().includes(query) ||
+                    (item.content || '').toLowerCase().includes(query);
+
+                return matchGrade && matchLesson && matchQuickType && matchTag && matchQuery;
+            });
+
+            renderLessonList();
+        }
+
+        // Cập nhật danh sách Lớp & Bài vào Dropdown
+        function populateFilterDropdowns() {
+            const gradeSelect = document.getElementById('gradeFilter');
+            const lessonSelect = document.getElementById('lessonFilter');
+            const currentGradeVal = gradeSelect.value;
+            const currentLessonVal = lessonSelect.value;
+
+            // Lấy danh sách Lớp duy nhất
+            const grades = [...new Set(lessonsData.map(i => i.grade.trim()).filter(Boolean))].sort();
+            gradeSelect.innerHTML = `<option value="ALL">Tất cả các Lớp (${grades.length})</option>` +
+                grades.map(g => `<option value="${escapeHtml(g)}">${escapeHtml(g)}</option>`).join('');
+
+            // Lấy danh sách Bài duy nhất
+            const lessonCodes = [...new Set(lessonsData.map(i => i.lessonCode.trim()).filter(Boolean))].sort((a, b) => 
+                a.localeCompare(b, undefined, { numeric: true })
+            );
+            lessonSelect.innerHTML = `<option value="ALL">Tất cả các Bài (${lessonCodes.length})</option>` +
+                lessonCodes.map(l => `<option value="${escapeHtml(l)}">${escapeHtml(l)}</option>`).join('');
+
+            if (grades.includes(currentGradeVal)) gradeSelect.value = currentGradeVal;
+            if (lessonCodes.includes(currentLessonVal)) lessonSelect.value = currentLessonVal;
+        }
+
+        // Render đám mây từ khóa (Tag Cloud)
+        function renderKeywordCloud() {
+            const container = document.getElementById('keywordCloud');
+            const freqMap = {};
+
+            lessonsData.forEach(item => {
+                if (!item.keywords) return;
+                item.keywords.split(',').forEach(rawTag => {
+                    const tag = rawTag.trim();
+                    if (tag) {
+                        const key = tag.toLowerCase();
+                        freqMap[key] = { label: tag, count: (freqMap[key]?.count || 0) + 1 };
+                    }
+                });
+            });
+
+            const tags = Object.values(freqMap).sort((a, b) => b.count - a.count);
+
+            let html = `
+                <span class="text-xs text-slate-400 font-medium mr-1 flex items-center gap-1 whitespace-nowrap">
+                    <i class="fa-solid fa-tags text-brand-400"></i>Từ khóa nhanh:
+                </span>
+                <button onclick="selectKeywordTag('')" class="px-2.5 py-1 rounded-lg text-xs font-medium whitespace-nowrap transition ${!currentKeywordTag ? 'bg-brand-600 text-white shadow' : 'bg-slate-800/80 text-slate-300 hover:bg-slate-700'}">
+                    Tất cả
+                </button>
+            `;
+
+            tags.forEach(t => {
+                const isActive = currentKeywordTag.toLowerCase() === t.label.toLowerCase();
+                html += `
+                    <button onclick="selectKeywordTag('${escapeHtml(t.label)}')" 
+                        class="px-2.5 py-1 rounded-lg text-xs font-medium whitespace-nowrap transition flex items-center gap-1.5 ${isActive ? 'bg-brand-600 text-white shadow' : 'bg-slate-800/80 text-slate-300 hover:bg-slate-700 border border-slate-700/60'}">
+                        <span>#${escapeHtml(t.label)}</span>
+                        <span class="text-[10px] opacity-70">${t.count}</span>
+                    </button>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function selectKeywordTag(tag) {
+            currentKeywordTag = (currentKeywordTag.toLowerCase() === tag.toLowerCase()) ? '' : tag;
+            renderKeywordCloud();
+            handleFilter();
+        }
+
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            handleFilter();
+            document.getElementById('searchInput').focus();
+        }
+
+        function resetAllFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('gradeFilter').value = 'ALL';
+            document.getElementById('lessonFilter').value = 'ALL';
+            currentKeywordTag = '';
+            currentQuickTypeFilter = '';
+            renderQuickTypeFilterBar();
+            renderKeywordCloud();
+            handleFilter();
+            showToast("Đã đặt lại toàn bộ bộ lọc", "info");
+        }
+
+        // 5. HIỂN THỊ DANH SÁCH THẺ BÀI HỌC (CỘT TRÁI - HIỂN THỊ RÕ: LỚP - TÊN BÀI - CHÚ THÍCH)
+        function renderLessonList() {
+            const container = document.getElementById('lessonListContainer');
+            document.getElementById('resultCount').textContent = filteredLessons.length;
+
+            const activeFilterEl = document.getElementById('activeFilterText');
+            const filterLabels = [];
+            if (currentQuickTypeFilter) filterLabels.push(currentQuickTypeFilter);
+            if (currentKeywordTag) filterLabels.push(`#${currentKeywordTag}`);
+            activeFilterEl.textContent = filterLabels.length > 0 ? `(${filterLabels.join(' • ')})` : '';
+
+            if (filteredLessons.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-8 text-center my-4">
+                        <div class="w-12 h-12 rounded-full bg-slate-800 mx-auto flex items-center justify-center text-slate-400 mb-3">
+                            <i class="fa-solid fa-magnifying-glass-minus text-xl"></i>
+                        </div>
+                        <h4 class="font-semibold text-white text-sm mb-1">Không tìm thấy bài học phù hợp</h4>
+                        <p class="text-xs text-slate-400 mb-4">Hãy thử chọn mục khác hoặc tải lên file bài học (.md / .json).</p>
+                        <button onclick="resetAllFilters()" class="px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-brand-400 font-medium border border-slate-700">
+                            Xóa bộ lọc
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filteredLessons.map(item => {
+                const isSelected = item.id === currentSelectedId;
+                const tags = item.keywords ? item.keywords.split(',').map(k => k.trim()).filter(Boolean).slice(0, 3) : [];
+                const snippet = (item.content || '').replace(/[#*`>|_-]/g, '').trim().slice(0, 100);
+
+                return `
+                    <div onclick="selectLesson('${escapeHtml(item.id)}')" 
+                        class="card-hover cursor-pointer p-4 rounded-xl border transition relative group ${isSelected ? 'bg-slate-800/95 border-brand-500 shadow-lg shadow-brand-500/10' : 'bg-slate-900/80 border-slate-800 hover:border-slate-700'}">
+                        
+                        <!-- Hàng trên: Lớp + Bài + Nhãn Chọn nhanh + Cụm nút Sửa / Xóa / Copy 1-Click -->
+                        <div class="flex items-center justify-between gap-2 mb-2">
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-brand-500/20 text-brand-300 border border-brand-500/30">
+                                    ${escapeHtml(item.grade)}
+                                </span>
+                                <span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                                    ${escapeHtml(item.lessonCode)}
+                                </span>
+                                ${item.quickType ? `
+                                    <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-violet-300 text-slate-950">
+                                        ${escapeHtml(item.quickType)}
+                                    </span>
+                                ` : ''}
+                            </div>
+
+                            <!-- Cụm thao tác nhanh: Sửa, Xóa, Copy MD ngay trên thẻ -->
+                            <div class="flex items-center gap-1">
+                                <button onclick="event.stopPropagation(); editLessonById('${escapeHtml(item.id)}')" 
+                                    title="Sửa bài học này"
+                                    class="px-2 py-1 rounded-lg bg-slate-800 hover:bg-amber-500/20 text-slate-400 hover:text-amber-300 border border-slate-700/80 hover:border-amber-500/40 text-xs transition">
+                                    <i class="fa-regular fa-pen-to-square"></i>
+                                </button>
+                                <button onclick="event.stopPropagation(); deleteLessonById('${escapeHtml(item.id)}')" 
+                                    title="Xóa bài học này"
+                                    class="px-2 py-1 rounded-lg bg-slate-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-300 border border-slate-700/80 hover:border-rose-500/40 text-xs transition">
+                                    <i class="fa-regular fa-trash-can"></i>
+                                </button>
+                                <button onclick="event.stopPropagation(); quickCopyById('${escapeHtml(item.id)}')" 
+                                    title="Copy toàn bộ Markdown của bài này ngay lập tức"
+                                    class="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-brand-600/20 hover:bg-brand-600 text-brand-300 hover:text-white border border-brand-500/30 text-xs font-semibold transition active:scale-95">
+                                    <i class="fa-regular fa-copy"></i>
+                                    <span>Copy MD</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Chuỗi định danh chuẩn: LỚP - TÊN BÀI -->
+                        <h3 class="font-bold text-sm sm:text-base text-white group-hover:text-brand-300 transition line-clamp-1 mb-1">
+                            ${escapeHtml(item.grade)} - ${escapeHtml(item.lessonCode)}: ${escapeHtml(item.title)}
+                        </h3>
+
+                        <!-- Dòng CHÚ THÍCH nổi bật -->
+                        ${item.note ? `
+                            <div class="text-xs text-amber-300/90 font-medium mb-1.5 flex items-center gap-1.5 line-clamp-1">
+                                <i class="fa-regular fa-comment-dots text-amber-400 text-[11px]"></i>
+                                <span>Chú thích: ${escapeHtml(item.note)}</span>
+                            </div>
+                        ` : ''}
+
+                        <!-- Đoạn trích ngắn -->
+                        <p class="text-xs text-slate-400 line-clamp-2 mb-2.5 leading-relaxed">
+                            ${escapeHtml(snippet)}...
+                        </p>
+
+                        <!-- Tags từ khóa -->
+                        <div class="flex items-center justify-between gap-2 pt-2 border-t border-slate-800/80">
+                            <div class="flex items-center gap-1 flex-wrap">
+                                ${tags.map(t => `
+                                    <span onclick="event.stopPropagation(); selectKeywordTag('${escapeHtml(t)}')" 
+                                        class="px-1.5 py-0.5 rounded bg-slate-950/70 hover:bg-brand-950 text-[10px] text-slate-400 hover:text-brand-300 border border-slate-800 transition">
+                                        #${escapeHtml(t)}
+                                    </span>
+                                `).join('')}
+                            </div>
+                            <span class="text-[10px] text-slate-500 whitespace-nowrap">${escapeHtml(item.updatedAt || '')}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 6. XEM CHI TIẾT BÀI HỌC (CỘT PHẢI)
+        function selectLesson(id) {
+            const lesson = lessonsData.find(i => i.id === id);
+            if (!lesson) return;
+
+            currentSelectedId = id;
+            renderLessonList(); // Highlight thẻ đang chọn
+
+            // Render Badges: Lớp - Bài - Chọn nhanh - Chú thích
+            document.getElementById('previewBadges').innerHTML = `
+                <span class="px-2.5 py-0.5 rounded-md text-xs font-semibold bg-brand-500/20 text-brand-300 border border-brand-500/30">
+                    <i class="fa-solid fa-graduation-cap mr-1"></i>${escapeHtml(lesson.grade)}
+                </span>
+                <span class="px-2.5 py-0.5 rounded-md text-xs font-semibold bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                    <i class="fa-solid fa-book-open mr-1"></i>${escapeHtml(lesson.lessonCode)}
+                </span>
+                ${lesson.quickType ? `
+                    <span class="px-3 py-0.5 rounded-full text-xs font-bold bg-violet-300 text-slate-950">
+                        ${escapeHtml(lesson.quickType)}
+                    </span>
+                ` : ''}
+                ${lesson.note ? `
+                    <span class="px-2.5 py-0.5 rounded-md text-xs font-medium bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                        <i class="fa-regular fa-note-sticky mr-1"></i>${escapeHtml(lesson.note)}
+                    </span>
+                ` : ''}
+            `;
+
+            document.getElementById('previewTitle').textContent = `${lesson.grade} - ${lesson.lessonCode}: ${lesson.title}`;
+            document.getElementById('previewMeta').textContent = `Cập nhật: ${lesson.updatedAt || 'Vừa xong'}`;
+
+            // Render Markdown
+            const renderedBox = document.getElementById('previewRenderedContent');
+            const rawBox = document.getElementById('previewRawContent');
+
+            renderedBox.innerHTML = marked.parse(lesson.content || '');
+            rawBox.textContent = lesson.content || '';
+
+            // Gắn nút Copy riêng cho từng khối code bên trong bài học
+            attachCodeBlockCopyButtons(renderedBox);
+
+            // Render Keywords ở Footer
+            const kwContainer = document.getElementById('previewKeywords');
+            const kws = lesson.keywords ? lesson.keywords.split(',').map(k => k.trim()).filter(Boolean) : [];
+            kwContainer.innerHTML = kws.map(k => `
+                <span onclick="selectKeywordTag('${escapeHtml(k)}')" class="cursor-pointer px-2 py-0.5 rounded-md bg-slate-900 hover:bg-brand-950 text-xs text-slate-300 hover:text-brand-300 border border-slate-800 transition">
+                    #${escapeHtml(k)}
+                </span>
+            `).join('');
+
+            document.getElementById('charCountInfo').textContent = `${(lesson.content || '').length} ký tự`;
+        }
+
+        // Gắn nút Copy nhỏ ở góc phải mỗi khối code trong bài học
+        function attachCodeBlockCopyButtons(container) {
+            const preBlocks = container.querySelectorAll('pre');
+            preBlocks.forEach(pre => {
+                const btn = document.createElement('button');
+                btn.className = "absolute top-2 right-2 px-2 py-1 rounded bg-slate-800/90 hover:bg-brand-600 text-[11px] text-slate-300 hover:text-white border border-slate-700 transition";
+                btn.innerHTML = `<i class="fa-regular fa-copy mr-1"></i>Copy đoạn mã`;
+                btn.onclick = () => {
+                    const codeText = pre.querySelector('code')?.innerText || pre.innerText;
+                    copyTextToClipboard(codeText, "Đã copy đoạn mã vào bộ nhớ tạm!");
+                };
+                pre.appendChild(btn);
+            });
+        }
+
+        function switchPreviewMode(mode) {
+            currentPreviewMode = mode;
+            const renderedBox = document.getElementById('previewRenderedContent');
+            const rawBox = document.getElementById('previewRawContent');
+            const tabRendered = document.getElementById('tabRendered');
+            const tabRaw = document.getElementById('tabRaw');
+
+            if (mode === 'rendered') {
+                renderedBox.classList.remove('hidden');
+                rawBox.classList.add('hidden');
+                tabRendered.className = "py-1 font-medium text-brand-400 border-b-2 border-brand-500 transition";
+                tabRaw.className = "py-1 font-medium text-slate-400 hover:text-slate-200 border-b-2 border-transparent transition";
+            } else {
+                renderedBox.classList.add('hidden');
+                rawBox.classList.remove('hidden');
+                tabRaw.className = "py-1 font-medium text-brand-400 border-b-2 border-brand-500 transition";
+                tabRendered.className = "py-1 font-medium text-slate-400 hover:text-slate-200 border-b-2 border-transparent transition";
+            }
+        }
+
+        // 7. CƠ CHẾ COPY BÀI HỌC NHANH NHẤT (1-CLICK COPY)
+        function copyTextToClipboard(text, successMsg) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                showToast(successMsg, 'success');
+            } catch (err) {
+                showToast('Không thể copy tự động, hãy bôi đen và nhấn Ctrl+C', 'error');
+            }
+            document.body.removeChild(textarea);
+        }
+
+        function quickCopyById(id) {
+            const lesson = lessonsData.find(i => i.id === id);
+            if (!lesson) return;
+            copyTextToClipboard(lesson.content, `Đã Copy Markdown: "${lesson.lessonCode} - ${lesson.title}"`);
+        }
+
+        function copyCurrentLesson(type) {
+            const lesson = lessonsData.find(i => i.id === currentSelectedId);
+            if (!lesson) {
+                showToast("Vui lòng chọn một bài học trước!", "error");
+                return;
+            }
+
+            if (type === 'markdown') {
+                copyTextToClipboard(lesson.content, `Đã Copy Markdown gốc của "${lesson.title}"!`);
+            } else {
+                // Chuyển Markdown sang văn bản thuần sạch sẽ
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = marked.parse(lesson.content);
+                const plainText = tempDiv.innerText || tempDiv.textContent;
+                copyTextToClipboard(plainText, `Đã Copy văn bản thuần của "${lesson.title}"!`);
+            }
+        }
+
+        // 8. THÊM / SỬA / XÓA BÀI HỌC & ĐỒNG BỘ GOOGLE SHEET
+        function openEditorModal(lessonToEdit = null) {
+            const modal = document.getElementById('editorModal');
+            const titleEl = document.getElementById('editorModalTitle');
+
+            if (lessonToEdit) {
+                titleEl.textContent = `Chỉnh sửa: ${lessonToEdit.grade} - ${lessonToEdit.lessonCode}: ${lessonToEdit.title}`;
+                document.getElementById('editLessonId').value = lessonToEdit.id;
+                document.getElementById('inputGrade').value = lessonToEdit.grade || '';
+                document.getElementById('inputLessonCode').value = lessonToEdit.lessonCode || '';
+                document.getElementById('inputTitle').value = lessonToEdit.title || '';
+                document.getElementById('inputNote').value = lessonToEdit.note || '';
+                document.getElementById('inputKeywords').value = lessonToEdit.keywords || '';
+                document.getElementById('inputMarkdown').value = lessonToEdit.content || '';
+                selectedEditorQuickType = lessonToEdit.quickType || 'Khám phá kiến thức';
+            } else {
+                titleEl.textContent = "Lưu Bài Học Mới (Lớp - Tên bài - Chú thích)";
+                document.getElementById('editLessonId').value = '';
+                document.getElementById('inputGrade').value = '';
+                document.getElementById('inputLessonCode').value = '';
+                document.getElementById('inputTitle').value = '';
+                selectedEditorQuickType = 'Khám phá kiến thức';
+                document.getElementById('inputNote').value = 'Khám phá kiến thức';
+                document.getElementById('inputKeywords').value = '';
+                document.getElementById('inputMarkdown').value = '';
+            }
+
+            renderEditorQuickPills();
+            updateLivePreview();
+            modal.classList.remove('hidden');
+            document.getElementById('inputGrade').focus();
+        }
+
+        function closeEditorModal() {
+            document.getElementById('editorModal').classList.add('hidden');
+        }
+
+        function editCurrentLesson() {
+            const lesson = lessonsData.find(i => i.id === currentSelectedId);
+            if (!lesson) return;
+            openEditorModal(lesson);
+        }
+
+        function editLessonById(id) {
+            const lesson = lessonsData.find(i => i.id === id);
+            if (!lesson) return;
+            currentSelectedId = id;
+            selectLesson(id);
+            openEditorModal(lesson);
+        }
+
+        function updateLivePreview() {
+            const raw = document.getElementById('inputMarkdown').value;
+            document.getElementById('livePreviewBox').innerHTML = marked.parse(raw || '*Nội dung xem trước sẽ hiển thị tại đây...*');
+        }
+
+        // Thanh công cụ hỗ trợ chèn cú pháp Markdown
+        function insertMD(prefix, suffix) {
+            const textarea = document.getElementById('inputMarkdown');
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const selected = textarea.value.substring(start, end) || 'văn bản';
+            const replacement = prefix + selected + suffix;
+
+            textarea.value = textarea.value.substring(0, start) + replacement + textarea.value.substring(end);
+            textarea.focus();
+            textarea.setSelectionRange(start + prefix.length, start + prefix.length + selected.length);
+            updateLivePreview();
+        }
+
+        function insertLessonTemplate() {
+            const textarea = document.getElementById('inputMarkdown');
+            const title = document.getElementById('inputTitle').value || 'Tên Bài Học';
+            const template = `# ${title}
+
+> **Mục tiêu bài học:** Tóm tắt ngắn gọn kiến thức trọng tâm cần nhớ.
+
+## 1. Kiến thức trọng tâm
+- Định nghĩa / công thức chính: $...$
+
+## 2. Ví dụ minh hoạ
+**Ví dụ 1.** ...
+
+**Lời giải.** ...
+
+## 3. Luyện tập
+1. ...
+2. ...
+
+## 4. Ghi nhớ
+- ...
+`;
+            if (textarea.value.trim() && !textarea.value.endsWith('\n')) textarea.value += '\n';
+            textarea.value = textarea.value.trim() ? textarea.value + '\n' + template : template;
+            textarea.focus();
+            updateLivePreview();
+            showToast("Đã chèn khung bài học mẫu.", "success");
+        }
+
+        // Lưu bài học theo chuẩn: LỚP - TÊN BÀI - CHÚ THÍCH - CHỌN NHANH và đẩy lên Google Sheet
+        async function saveLesson() {
+            const idInput = document.getElementById('editLessonId').value;
+            const grade = document.getElementById('inputGrade').value.trim();
+            let lessonCode = document.getElementById('inputLessonCode').value.trim();
+            let title = document.getElementById('inputTitle').value.trim();
+            const note = document.getElementById('inputNote').value.trim() || selectedEditorQuickType;
+            const keywords = document.getElementById('inputKeywords').value.trim();
+            const content = document.getElementById('inputMarkdown').value;
+
+            // Nếu người dùng gộp "Bài 1: Tên bài" vào ô Tên bài mà để trống ô Mã bài, tự động tách thông minh
+            if (!lessonCode && title.includes(':')) {
+                const parts = title.split(':');
+                lessonCode = parts.shift().trim();
+                title = parts.join(':').trim();
+            } else if (!lessonCode) {
+                lessonCode = "Bài học";
+            }
+
+            if (!grade || !title || !content.trim()) {
+                showToast("Vui lòng nhập đầy đủ Lớp, Tên bài và Nội dung Markdown!", "error");
+                return;
+            }
+
+            const now = new Date();
+            const timestamp = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+            // Đảm bảo nhãn Chọn nhanh cũng nằm trong từ khóa để truy xuất nhanh
+            let combinedKeywords = keywords;
+            if (selectedEditorQuickType && !combinedKeywords.toLowerCase().includes(selectedEditorQuickType.toLowerCase())) {
+                combinedKeywords = combinedKeywords ? `${selectedEditorQuickType}, ${combinedKeywords}` : selectedEditorQuickType;
+            }
+
+            const lessonObj = {
+                id: idInput || ('lesson-' + Date.now()),
+                grade,
+                lessonCode,
+                title,
+                note,
+                quickType: selectedEditorQuickType,
+                keywords: combinedKeywords,
+                content,
+                updatedAt: timestamp
+            };
+
+            const existingIndex = lessonsData.findIndex(i => i.id === lessonObj.id);
+            if (existingIndex >= 0) {
+                lessonsData[existingIndex] = lessonObj;
+            } else {
+                lessonsData.unshift(lessonObj);
+            }
+
+            populateFilterDropdowns();
+            renderKeywordCloud();
+            handleFilter();
+            selectLesson(lessonObj.id);
+            closeEditorModal();
+
+            showToast(`Đã lưu: "${lessonObj.grade} - ${lessonObj.title} (${lessonObj.note})"`, "success");
+
+            // Tự động đồng bộ lên Google Sheet nếu đã cấu hình URL và đặt lại chu kỳ 10s
+            if (googleSheetWebAppUrl) {
+                lastWriteTime = Date.now();
+                autoSyncCountdown = 10;
+                await syncSingleLessonToSheet("UPSERT", lessonObj);
+            }
+        }
+
+        // Xóa bài học
+        function deleteCurrentLesson() {
+            const lesson = lessonsData.find(i => i.id === currentSelectedId);
+            if (!lesson) return;
+            deleteLessonById(lesson.id);
+        }
+
+        function deleteLessonById(id) {
+            const lesson = lessonsData.find(i => i.id === id);
+            if (!lesson) return;
+            pendingDeleteId = lesson.id;
+            document.getElementById('deleteModalDesc').textContent = `Bạn có chắc muốn xóa bài "${lesson.lessonCode} - ${lesson.title}" (${lesson.grade}) không? Bài học cũng sẽ được xóa đồng bộ trên Google Sheet.`;
+            document.getElementById('deleteConfirmModal').classList.remove('hidden');
+        }
+
+        function closeDeleteModal() {
+            pendingDeleteId = null;
+            document.getElementById('deleteConfirmModal').classList.add('hidden');
+        }
+
+        async function confirmDeleteLesson() {
+            if (!pendingDeleteId) return;
+            const deletedId = pendingDeleteId;
+            lessonsData = lessonsData.filter(i => i.id !== deletedId);
+            deletedIds.push(String(deletedId));
+            closeDeleteModal();
+
+            populateFilterDropdowns();
+            renderKeywordCloud();
+            handleFilter();
+
+            if (filteredLessons.length > 0) {
+                selectLesson(filteredLessons[0].id);
+            } else {
+                currentSelectedId = null;
+                document.getElementById('previewTitle').textContent = "Chưa có bài học nào được chọn";
+                document.getElementById('previewRenderedContent').innerHTML = "";
+                document.getElementById('previewRawContent').textContent = "";
+            }
+
+            showToast("Đã xóa bài học!", "info");
+
+            if (googleSheetWebAppUrl) {
+                lastWriteTime = Date.now();
+                autoSyncCountdown = 10;
+                await syncSingleLessonToSheet("DELETE", { id: deletedId });
+            }
+        }
+
+        // 9. KẾT NỐI ĐỒNG BỘ 2 CHIỀU VỚI GOOGLE SHEETS
+        function openSheetModal() {
+            document.getElementById('sheetUrlInput').value = googleSheetWebAppUrl;
+            document.getElementById('sheetModal').classList.remove('hidden');
+        }
+
+        function closeSheetModal() {
+            document.getElementById('sheetModal').classList.add('hidden');
+        }
+
+        function saveSheetUrl() {
+            const url = document.getElementById('sheetUrlInput').value.trim();
+            if (!url) {
+                googleSheetWebAppUrl = '';
+                lsSet(LS_URL, '');
+                updateSyncBadge('local', 'Chế độ Local (Chưa gắn Sheet)');
+                showToast("Đã ngắt kết nối Google Sheet", "info");
+                return;
+            }
+
+            if (!url.startsWith('https://script.google.com/')) {
+                showToast("URL không hợp lệ! URL phải bắt đầu bằng https://script.google.com/...", "error");
+                return;
+            }
+
+            googleSheetWebAppUrl = url;
+            lsSet(LS_URL, url);
+            autoSyncCountdown = 10;
+            updateSyncBadge('connected', 'Đã kết nối Google Sheet');
+            showToast("Đã lưu kết nối Google Sheet! Đang tải dữ liệu...", "success");
+            fetchFromGoogleSheet(false);
+        }
+
+        function updateSyncBadge(state, message) {
+            const dot = document.getElementById('syncDot');
+            const text = document.getElementById('syncText');
+            if (!dot || !text) return;
+
+            text.textContent = message;
+            if (state === 'connected') {
+                dot.className = "w-2 h-2 rounded-full bg-emerald-400";
+            } else if (state === 'syncing') {
+                dot.className = "w-2 h-2 rounded-full bg-brand-400 animate-ping";
+            } else if (state === 'error') {
+                dot.className = "w-2 h-2 rounded-full bg-rose-500";
+            } else {
+                dot.className = "w-2 h-2 rounded-full bg-amber-400 animate-pulse";
+            }
+        }
+
+        // Tải toàn bộ bài học từ Google Sheet về (GET) - Hỗ trợ cả tải thủ công và tự động ngầm mỗi 10s
+        async function fetchFromGoogleSheet(silent = false) {
+            if (!googleSheetWebAppUrl) {
+                if (!silent) {
+                    openSheetModal();
+                    showToast("Hãy dán đường dẫn Google Apps Script Web App URL trước!", "info");
+                }
+                return;
+            }
+
+            if (isSyncingInProgress) return;
+            isSyncingInProgress = true;
+
+            const syncIcon = document.getElementById('syncIcon');
+            const autoSyncIcon = document.getElementById('autoSyncIcon');
+            syncIcon.classList.add('fa-spin');
+            if (autoSyncIcon) autoSyncIcon.classList.add('fa-spin');
+            updateSyncBadge('syncing', 'Đang đồng bộ từ Sheet...');
+
+            try {
+                // Thêm tham số chống lưu cache để luôn lấy dữ liệu mới nhất sau mỗi 10s
+                const fetchUrl = googleSheetWebAppUrl + (googleSheetWebAppUrl.includes('?') ? '&' : '?') + 't=' + Date.now();
+                const response = await fetch(fetchUrl, { method: 'GET', redirect: 'follow' });
+                const result = await response.json();
+
+                if (result.status === 'success' && Array.isArray(result.data)) {
+                    const nowTime = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                    if (silent && Date.now() - lastWriteTime < 15000) return; // vừa ghi lên Sheet: chờ Sheet lưu xong rồi mới tải
+                    if (result.data.length > 0) {
+                        // GỘP theo id thay vì thay thế: bài chỉ có trên máy (vừa tải lên) được giữ lại, bản nào mới hơn thì thắng
+                        const oldJson = JSON.stringify(lessonsData);
+                        const merged = lessonsData.map(x => ({ ...x }));
+                        result.data.forEach(s => {
+                            if (deletedIds.includes(String(s.id))) return;
+                            const ex = merged.find(x => String(x.id) === String(s.id));
+                            if (!ex) merged.push(s);
+                            else if (tsOf(s.updatedAt) > tsOf(ex.updatedAt)) Object.assign(ex, s);
+                        });
+                        const newJson = JSON.stringify(merged);
+                        if (oldJson !== newJson) {
+                            const prevSelectedId = currentSelectedId;
+                            lessonsData = merged;
+                            populateFilterDropdowns();
+                            renderKeywordCloud();
+                            handleFilter();
+                            const stillExists = lessonsData.some(i => i.id === prevSelectedId);
+                            selectLesson(stillExists ? prevSelectedId : lessonsData[0].id);
+                            if (silent) {
+                                showToast(`Đã tự động cập nhật dữ liệu mới từ Google Sheet (${lessonsData.length} bài)!`, "info");
+                            }
+                        }
+                        if (!silent) {
+                            showToast(`Đã tải thành công ${lessonsData.length} bài học từ Google Sheet!`, "success");
+                        }
+                    } else if (!silent) {
+                        showToast("Google Sheet hiện đang trống. Bạn có thể bấm 'Đẩy toàn bộ bài lên Sheet'.", "info");
+                    }
+                    updateSyncBadge('connected', `Đã đồng bộ lúc ${nowTime} (${lessonsData.length} bài)`);
+                } else {
+                    throw new Error("Cấu trúc phản hồi không hợp lệ");
+                }
+            } catch (error) {
+                updateSyncBadge('error', 'Lỗi kết nối Sheet');
+                if (!silent) {
+                    showToast("Không thể lấy dữ liệu từ Google Sheet. Hãy kiểm tra quyền 'Anyone' của Web App.", "error");
+                }
+            } finally {
+                syncIcon.classList.remove('fa-spin');
+                if (autoSyncIcon) autoSyncIcon.classList.remove('fa-spin');
+                isSyncingInProgress = false;
+                autoSyncCountdown = 10;
+            }
+        }
+
+        // Đẩy 1 bài học vừa lưu hoặc xóa lên Google Sheet (POST)
+        async function syncSingleLessonToSheet(action, payloadData) {
+            if (!googleSheetWebAppUrl) return;
+            isSyncingInProgress = true;
+            updateSyncBadge('syncing', 'Đang lưu lên Google Sheet...');
+
+            try {
+                const bodyPayload = action === "UPSERT" 
+                    ? { action: "UPSERT", lesson: payloadData }
+                    : { action: "DELETE", id: payloadData.id };
+
+                await fetch(googleSheetWebAppUrl, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(bodyPayload)
+                });
+
+                const nowTime = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                updateSyncBadge('connected', `Đã đẩy lên Sheet (${nowTime})`);
+            } catch (error) {
+                updateSyncBadge('error', 'Lỗi đồng bộ Sheet');
+                showToast("Đã lưu trên máy nhưng chưa đẩy lên được Google Sheet.", "error");
+            } finally {
+                isSyncingInProgress = false;
+                autoSyncCountdown = 10;
+            }
+        }
+
+        // Đẩy toàn bộ danh sách hiện tại lên Google Sheet
+        async function pushAllToGoogleSheet() {
+            const urlInput = document.getElementById('sheetUrlInput').value.trim();
+            if (urlInput) googleSheetWebAppUrl = urlInput;
+
+            if (!googleSheetWebAppUrl) {
+                showToast("Vui lòng nhập Google Apps Script Web App URL!", "error");
+                return;
+            }
+
+            isSyncingInProgress = true;
+            lastWriteTime = Date.now();
+            updateSyncBadge('syncing', 'Đang đẩy toàn bộ lên Sheet...');
+            try {
+                await fetch(googleSheetWebAppUrl, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({
+                        action: "SYNC_ALL",
+                        lessons: lessonsData
+                    })
+                });
+                updateSyncBadge('connected', `Đã đồng bộ (${lessonsData.length} bài)`);
+                showToast(`Đã gửi toàn bộ ${lessonsData.length} bài học lên Google Sheet!`, "success");
+            } catch (err) {
+                updateSyncBadge('error', 'Lỗi đẩy dữ liệu');
+                showToast("Lỗi khi đẩy dữ liệu lên Google Sheet!", "error");
+            } finally {
+                isSyncingInProgress = false;
+                autoSyncCountdown = 10;
+            }
+        }
+
+        // (Đã bỏ bản khai báo trùng của fetchFromGoogleSheet / syncSingleLessonToSheet / pushAllToGoogleSheet:
+        //  bản trùng ghi đè bản có chế độ "silent", làm lần đồng bộ ngầm mỗi 10 giây xoá mất bài vừa tải lên.)
+
+        function copyAppsScriptCode() {
+            const code = document.getElementById('appsScriptCodeBlock').innerText;
+            copyTextToClipboard(code, "Đã Copy mã Google Apps Script! Hãy dán vào trình biên tập Apps Script của bạn.");
+        }
+
+        // 10. HỆ THỐNG XUẤT / TẢI LÊN FILE ĐA ĐỊNH DẠNG (.JSON VÀ .MD)
+        function exportJSON() {
+            const dataStr = JSON.stringify(lessonsData, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `SmartLesson_Backup_${new Date().toISOString().slice(0,10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast("Đã tải xuống file sao lưu .JSON!", "success");
+        }
+
+        // Xuất bài học đang chọn ra file .MD chuẩn có Frontmatter (Lớp - Tên bài - Chú thích)
+        function exportCurrentMD() {
+            const lesson = lessonsData.find(i => i.id === currentSelectedId);
+            if (!lesson) {
+                showToast("Hãy chọn một bài học để tải xuống file .MD!", "error");
+                return;
+            }
+
+            const mdWithMeta = `---
+Lớp: ${lesson.grade}
+Mã bài: ${lesson.lessonCode}
+Tên bài: ${lesson.title}
+Chú thích: ${lesson.note || ''}
+Chọn nhanh: ${lesson.quickType || ''}
+Từ khóa: ${lesson.keywords || ''}
+---
+
+${lesson.content}`;
+
+            const blob = new Blob([mdWithMeta], { type: 'text/markdown;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const safeFileName = `${lesson.grade}_${lesson.lessonCode}_${lesson.title}_${lesson.note || ''}`
+                .replace(/[\\/:*?"<>|]/g, '-')
+                .replace(/\s+/g, '_');
+            a.href = url;
+            a.download = `${safeFileName}.md`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast(`Đã xuất file "${safeFileName}.md"!`, "success");
+        }
+
+        // Phân tích thông minh file .MD (Hỗ trợ cả YAML Frontmatter hoặc tên file "Lớp 12 - Bài 1 - Chú thích.md")
+        function parseMarkdownFileToLesson(fileName, rawText) {
+            rawText = String(rawText).replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n'); // file lưu từ Windows / có BOM
+            fileName = String(fileName).replace(/^.*[\\/]/, '');
+            const cleanName = fileName.replace(/\.(md|markdown|txt)$/i, '');
+            let grade = "Lớp 12";
+            let lessonCode = "Bài mới";
+            let title = cleanName;
+            let note = "Khám phá kiến thức";
+            let quickType = "Khám phá kiến thức";
+            let keywords = "markdown, tài liệu";
+            let bodyContent = rawText;
+
+            // 1. Kiểm tra nếu file .md có phần đầu YAML Frontmatter (--- ... ---)
+            const fmMatch = rawText.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
+            if (fmMatch) {
+                const fmBlock = fmMatch[1];
+                bodyContent = fmMatch[2].trim();
+                const getMeta = (key) => {
+                    const m = fmBlock.match(new RegExp(`^${key}\\s*:\\s*(.+)$`, 'mi'));
+                    return m ? m[1].trim() : '';
+                };
+                grade = getMeta('Lớp') || getMeta('grade') || grade;
+                lessonCode = getMeta('Mã bài') || getMeta('lessonCode') || lessonCode;
+                title = getMeta('Tên bài') || getMeta('title') || title;
+                note = getMeta('Chú thích') || getMeta('note') || note;
+                quickType = getMeta('Chọn nhanh') || getMeta('quickType') || quickType;
+                keywords = getMeta('Từ khóa') || getMeta('keywords') || keywords;
+            } else {
+                // 2. Nếu tên file đặt theo dạng "Lớp 10 - Bài 2 - Khám phá kiến thức.md"
+                const parts = cleanName.split(/\s+[-–]\s+|\s*_\s*/); // không cắt nhầm chữ có gạch nối như "phương-trình"
+                if (parts.length >= 3 && /lớp|khối|đại học/i.test(parts[0])) {
+                    grade = parts[0].trim();
+                    title = parts[1].trim();
+                    note = parts.slice(2).join(' - ').trim();
+                } else if (parts.length === 2 && /lớp|khối/i.test(parts[0])) {
+                    grade = parts[0].trim();
+                    title = parts[1].trim();
+                }
+
+                // File của "Ứng dụng dạy học Toán": dòng @tên bộ là tên cả bài; đoán lớp từ "Toán 10", "Lớp 11"…
+                const gm = (cleanName + ' ' + bodyContent.slice(0, 600)).match(/(?:lớp|toán|khối)\s*(1[0-2]|[1-9])\b/i);
+                if (gm && grade === "Lớp 12" && !/lớp|khối/i.test(parts[0] || '')) grade = 'Lớp ' + gm[1];
+                const setTitle = bodyContent.match(/^@\s*tên\s*bộ\s*:\s*(.+)$/mi);
+                // Nếu trong bài có dòng # Tiêu đề đầu tiên thì lấy làm Tên bài
+                const headingMatch = setTitle || bodyContent.match(/^#\s+(.+)$/m);
+                if (headingMatch) {
+                    const h1 = headingMatch[1].trim();
+                    if (h1.includes(':')) {
+                        const hParts = h1.split(':');
+                        lessonCode = hParts.shift().trim();
+                        title = hParts.join(':').trim();
+                    } else {
+                        title = h1;
+                    }
+                }
+
+                // Khớp tự động mục Chọn nhanh nếu xuất hiện trong tên file hoặc chú thích
+                const matchedQuick = QUICK_TYPES.find(q => rawText.toLowerCase().includes(q.toLowerCase()) || cleanName.toLowerCase().includes(q.toLowerCase()));
+                if (matchedQuick) {
+                    quickType = matchedQuick;
+                    if (note === "Khám phá kiến thức") note = matchedQuick;
+                }
+            }
+
+            const now = new Date();
+            const timestamp = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+            return {
+                id: 'lesson-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6),
+                grade,
+                lessonCode,
+                title,
+                note,
+                quickType,
+                keywords,
+                content: bodyContent,
+                updatedAt: timestamp
+            };
+        }
+
+        // Tải lên cùng lúc 1 hoặc nhiều file (.json hoặc .md) từ thanh công cụ
+        async function importFiles(event) {
+            const files = Array.from(event.target.files || []);
+            if (files.length === 0) return;
+
+            let importedCount = 0;
+
+            let skipped = 0, failed = [];
+            lastWriteTime = Date.now();
+            for (const file of files) {
+                if (!/\.(md|markdown|txt|json)$/i.test(file.name)) { failed.push(file.name); continue; }
+                let text;
+                try { text = (await file.text()).replace(/^\uFEFF/, ''); } catch (e) { failed.push(file.name); continue; }
+                if (file.name.toLowerCase().endsWith('.json')) {
+                    try {
+                        const parsed = JSON.parse(text);
+                        if (Array.isArray(parsed)) {
+                            parsed.forEach(item => {
+                                if (item && item.title && item.content) {
+                                    lessonsData.unshift({
+                                        id: item.id || ('lesson-' + Date.now() + Math.random()),
+                                        grade: item.grade || 'Lớp 12',
+                                        lessonCode: item.lessonCode || 'Bài học',
+                                        title: item.title,
+                                        note: item.note || item.quickType || 'Khám phá kiến thức',
+                                        quickType: item.quickType || 'Khám phá kiến thức',
+                                        keywords: item.keywords || '',
+                                        content: item.content,
+                                        updatedAt: item.updatedAt || new Date().toISOString().slice(0, 16).replace('T', ' ')
+                                    });
+                                    importedCount++;
+                                }
+                            });
+                        } else if (parsed && parsed.title && parsed.content) {
+                            lessonsData.unshift(parsed);
+                            importedCount++;
+                        }
+                    } catch (e) {
+                        showToast(`File ${file.name} không đúng chuẩn JSON!`, "error");
+                    }
+                } else {
+                    // Xử lý file .md / .markdown / .txt
+                    const lessonFromMd = parseMarkdownFileToLesson(file.name, text);
+                    const dup = lessonsData.find(x => x.title === lessonFromMd.title && x.grade === lessonFromMd.grade && String(x.content).trim() === lessonFromMd.content.trim());
+                    if (dup) { skipped++; continue; }
+                    lessonsData.unshift(lessonFromMd);
+                    importedCount++;
+                }
+            }
+
+            if (skipped || failed.length) showToast(`${skipped ? skipped + ' bài đã có sẵn, bỏ qua. ' : ''}${failed.length ? 'Không đọc được: ' + failed.slice(0, 3).join(', ') : ''}`, "info");
+            if (importedCount > 0) {
+                persistLocal();
+                populateFilterDropdowns();
+                renderKeywordCloud();
+                handleFilter();
+                selectLesson(lessonsData[0].id);
+                showToast(`Đã tải lên thành công ${importedCount} bài học!`, "success");
+
+                // Nếu chỉ tải lên 1 file .md, mở ngay hộp thoại Lưu bài để giáo viên xác nhận Lớp - Tên bài - Chú thích - Chọn nhanh
+                if (files.length === 1 && !files[0].name.toLowerCase().endsWith('.json')) {
+                    openEditorModal(lessonsData[0]);
+                }
+                // Đẩy ngay từng bài mới lên Sheet (UPSERT) — không dùng SYNC_ALL để khỏi xoá trắng bảng rồi ghi lại
+                if (googleSheetWebAppUrl) {
+                    for (const item of lessonsData.slice(0, importedCount)) await syncSingleLessonToSheet("UPSERT", item);
+                    lastWriteTime = Date.now();
+                }
+            }
+
+            event.target.value = '';
+        }
+
+        // Nạp nội dung từ file .md hoặc .json trực tiếp vào cửa sổ đang Soạn thảo
+        async function loadFileIntoEditor(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const text = await file.text();
+
+            if (file.name.toLowerCase().endsWith('.json')) {
+                try {
+                    const obj = JSON.parse(text);
+                    const item = Array.isArray(obj) ? obj[0] : obj;
+                    if (item) {
+                        document.getElementById('inputGrade').value = item.grade || '';
+                        document.getElementById('inputLessonCode').value = item.lessonCode || '';
+                        document.getElementById('inputTitle').value = item.title || '';
+                        document.getElementById('inputNote').value = item.note || '';
+                        document.getElementById('inputKeywords').value = item.keywords || '';
+                        document.getElementById('inputMarkdown').value = item.content || '';
+                        if (item.quickType) selectEditorQuickPill(item.quickType);
+                        updateLivePreview();
+                        showToast("Đã nạp dữ liệu từ file .JSON vào trình soạn thảo!", "success");
+                    }
+                } catch (e) {
+                    showToast("Lỗi đọc file JSON!", "error");
+                }
+            } else {
+                const parsed = parseMarkdownFileToLesson(file.name, text);
+                if (!document.getElementById('inputGrade').value) document.getElementById('inputGrade').value = parsed.grade;
+                if (!document.getElementById('inputLessonCode').value) document.getElementById('inputLessonCode').value = parsed.lessonCode;
+                if (!document.getElementById('inputTitle').value) document.getElementById('inputTitle').value = parsed.title;
+                document.getElementById('inputNote').value = parsed.note;
+                document.getElementById('inputMarkdown').value = parsed.content;
+                selectEditorQuickPill(parsed.quickType);
+                updateLivePreview();
+                showToast(`Đã nạp file "${file.name}" vào trình soạn thảo!`, "success");
+            }
+            event.target.value = '';
+        }
+
+        // 11. PHÍM TẮT BÀN PHÍM TĂNG TỐC ĐỘ TRUY XUẤT
+        function setupKeyboardShortcuts() {
+            document.addEventListener('keydown', (e) => {
+                // Ấn '/' để nhảy vào ô tìm kiếm ngay lập tức
+                if (e.key === '/' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+                    e.preventDefault();
+                    document.getElementById('searchInput').focus();
+                }
+                // Ấn Alt + N để mở trình tạo bài học mới
+                if (e.altKey && e.key.toLowerCase() === 'n') {
+                    e.preventDefault();
+                    openEditorModal();
+                }
+                // Ấn Alt + R để tải lại từ Google Sheet
+                if (e.altKey && e.key.toLowerCase() === 'r') {
+                    e.preventDefault();
+                    fetchFromGoogleSheet(false);
+                }
+                // Ấn Escape để đóng các Modal
+                if (e.key === 'Escape') {
+                    closeEditorModal();
+                    closeSheetModal();
+                    closeDeleteModal();
+                }
+            });
+        }
+
+        // 12. TIỆN ÍCH HIỂN THỊ TOAST & BẢO MẬT HTML
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            
+            const colors = {
+                success: 'bg-emerald-950/95 border-emerald-500/50 text-emerald-200',
+                error: 'bg-rose-950/95 border-rose-500/50 text-rose-200',
+                info: 'bg-slate-900/95 border-brand-500/50 text-slate-200'
+            };
+            const icons = {
+                success: 'fa-circle-check text-emerald-400',
+                error: 'fa-circle-exclamation text-rose-400',
+                info: 'fa-circle-info text-brand-400'
+            };
+
+            toast.className = `pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl border shadow-xl backdrop-blur-md text-xs sm:text-sm font-medium transition-all duration-300 ${colors[type] || colors.info}`;
+            toast.innerHTML = `
+                <i class="fa-solid ${icons[type] || icons.info} text-base"></i>
+                <span>${escapeHtml(message)}</span>
+            `;
+
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(10px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
